@@ -8,7 +8,7 @@ import {
 // ─────────────────────────────────────────────────────────────────────────────
 // OPENROUTER — Claude via fetch (no SDK dependency)
 // ─────────────────────────────────────────────────────────────────────────────
-const OPENROUTER_API_KEY = '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';
+const OPENROUTER_API_KEY = import.meta.env.VITE_OPENROUTER_API_KEY || '';
 const OPENROUTER_BASE_URL = 'https://openrouter.ai/api/v1/chat/completions';
 
 // Use Claude Sonnet — best balance of speed and quality
