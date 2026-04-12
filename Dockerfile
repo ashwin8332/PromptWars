@@ -1,28 +1,37 @@
-# Step 1: Build the Vite application
-FROM node:18-alpine AS builder
+# ─────────────────────────────────────────────────────────────
+# Stage 1: Build
+# ─────────────────────────────────────────────────────────────
+FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-# Install dependencies based on the preferred package manager
+# Install dependencies first (cached layer)
 COPY package.json package-lock.json* ./
-RUN npm ci
+RUN npm ci --frozen-lockfile
 
-# Copy application code
+# Copy source and build
 COPY . .
-
-# Build standard and minified production environment
 RUN npm run build
 
-# Step 2: Serve via Nginx for Cloud Run
-FROM nginx:alpine
+# ─────────────────────────────────────────────────────────────
+# Stage 2: Serve via Nginx — Cloud Run ready (port 8080)
+# ─────────────────────────────────────────────────────────────
+FROM nginx:1.25-alpine
 
-# Copy custom Nginx configuration
+# Remove default config
+RUN rm -f /etc/nginx/conf.d/default.conf
+
+# Copy custom config
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-# Copy build artifacts to Nginx server
+# Copy built assets from Stage 1
 COPY --from=builder /app/dist /usr/share/nginx/html
 
-# Expose port required by Cloud Run (8080)
+# Cloud Run requires listening on $PORT (default 8080)
 EXPOSE 8080
+
+# Health check for Cloud Run readiness probes
+HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
+  CMD wget -qO- http://localhost:8080/ || exit 1
 
 CMD ["nginx", "-g", "daemon off;"]

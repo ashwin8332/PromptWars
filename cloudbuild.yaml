@@ -1,0 +1,50 @@
+# cloudbuild.yaml — Google Cloud Build → Cloud Run deployment
+# Usage: gcloud builds submit --config cloudbuild.yaml .
+#
+# Prerequisites:
+#   gcloud auth login
+#   gcloud config set project YOUR_PROJECT_ID
+#   gcloud services enable cloudbuild.googleapis.com run.googleapis.com
+
+steps:
+  # Step 1: Build Docker image
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '-t'
+      - 'gcr.io/$PROJECT_ID/pfis-app:$COMMIT_SHA'
+      - '-t'
+      - 'gcr.io/$PROJECT_ID/pfis-app:latest'
+      - '.'
+
+  # Step 2: Push to Google Container Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'push'
+      - '--all-tags'
+      - 'gcr.io/$PROJECT_ID/pfis-app'
+
+  # Step 3: Deploy to Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: 'gcloud'
+    args:
+      - 'run'
+      - 'deploy'
+      - 'pfis-app'
+      - '--image=gcr.io/$PROJECT_ID/pfis-app:$COMMIT_SHA'
+      - '--region=us-central1'
+      - '--platform=managed'
+      - '--allow-unauthenticated'   # Public access — change for private deployments
+      - '--port=8080'
+      - '--memory=256Mi'
+      - '--cpu=1'
+      - '--max-instances=10'
+      - '--min-instances=0'         # Scale to zero when idle (cost-efficient)
+
+images:
+  - 'gcr.io/$PROJECT_ID/pfis-app:$COMMIT_SHA'
+  - 'gcr.io/$PROJECT_ID/pfis-app:latest'
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+  machineType: 'E2_HIGHCPU_8'
