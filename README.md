@@ -1,4 +1,4 @@
-# ⚡ Professional Financial Intelligence Suite (PFIS)
+#  Professional Financial Intelligence Suite (PFIS)
 
 ![Status: Live Production](https://img.shields.io/badge/Status-Live_Production-32c954?style=for-the-badge)
 ![AI Engine: Claude 3.5 Sonnet](https://img.shields.io/badge/AI_Engine-Claude_3.5_Sonnet-f5c800?style=for-the-badge&logo=anthropic&logoColor=black)
